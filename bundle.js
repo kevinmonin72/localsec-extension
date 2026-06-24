@@ -1490,12 +1490,6 @@
         findings: allFindings
       };
       const htmlOutput = renderHtmlReport([reportResult]);
-      const baseDomainUrl = new URL(tab.url).origin;
-      await new Promise((resolve) => {
-        const data = {};
-        data["report_" + baseDomainUrl] = htmlOutput;
-        chrome.storage.local.set(data, () => resolve());
-      });
       const exportData = {
         isLocalsecAudit: true,
         siteUrl: normalizedData.finalUrl,
@@ -1503,6 +1497,13 @@
         grade: scoreResult.grade,
         findings: allFindings
       };
+      const baseDomainUrl = new URL(tab.url).origin;
+      await new Promise((resolve) => {
+        const data = {};
+        data["report_" + baseDomainUrl] = htmlOutput;
+        data["json_" + baseDomainUrl] = exportData;
+        chrome.storage.local.set(data, () => resolve());
+      });
       const jsonBlob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
       const jsonUrl = URL.createObjectURL(jsonBlob);
       chrome.downloads.download({

@@ -150,16 +150,6 @@ document.getElementById('audit-btn').addEventListener('click', async () => {
 
         const htmlOutput = renderHtmlReport([reportResult]);
 
-        // Sauvegarder dans le storage local (associé au domaine ou URL)
-        // On stocke l'URL de base pour matcher facilement avec la liste
-        const baseDomainUrl = new URL(tab.url).origin;
-        
-        await new Promise((resolve) => {
-            const data = {};
-            data['report_' + baseDomainUrl] = htmlOutput;
-            chrome.storage.local.set(data, () => resolve());
-        });
-
         // --- EXPORT JSON POUR EMAIL COMMERCIAL ---
         const exportData = {
             isLocalsecAudit: true,
@@ -168,6 +158,17 @@ document.getElementById('audit-btn').addEventListener('click', async () => {
             grade: scoreResult.grade,
             findings: allFindings
         };
+
+        // Sauvegarder dans le storage local (associé au domaine ou URL)
+        // On stocke l'URL de base pour matcher facilement avec la liste
+        const baseDomainUrl = new URL(tab.url).origin;
+        
+        await new Promise((resolve) => {
+            const data = {};
+            data['report_' + baseDomainUrl] = htmlOutput;
+            data['json_' + baseDomainUrl] = exportData;
+            chrome.storage.local.set(data, () => resolve());
+        });
         
         const jsonBlob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
         const jsonUrl = URL.createObjectURL(jsonBlob);

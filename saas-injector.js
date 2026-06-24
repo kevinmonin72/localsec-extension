@@ -12,12 +12,22 @@ function injectReports() {
                 const reportKey = 'report_' + url;
                 
                 if (items[reportKey]) {
-                    // Si on a un rapport en mémoire et qu'on n'a pas encore injecté le bouton
-                    if (!link.parentElement.querySelector('.view-report-btn')) {
+                    // Conteneur pour les boutons
+                    let btnContainer = link.parentElement.querySelector('.localsec-btns');
+                    if (!btnContainer) {
+                        btnContainer = document.createElement('div');
+                        btnContainer.className = 'localsec-btns';
+                        btnContainer.style.marginLeft = 'auto';
+                        btnContainer.style.display = 'flex';
+                        btnContainer.style.gap = '8px';
+                        link.parentElement.appendChild(btnContainer);
+                    }
+
+                    // Bouton Rapport Technique
+                    if (!btnContainer.querySelector('.view-report-btn')) {
                         const btn = document.createElement('button');
                         btn.className = 'btn secondary view-report-btn';
-                        btn.textContent = '📄 Voir le Rapport';
-                        btn.style.marginLeft = 'auto';
+                        btn.textContent = '📄 Rapport';
                         btn.style.padding = '4px 10px';
                         btn.style.fontSize = '0.85rem';
                         
@@ -27,8 +37,28 @@ function injectReports() {
                             const blobUrl = URL.createObjectURL(blob);
                             window.open(blobUrl, '_blank');
                         });
+                        btnContainer.appendChild(btn);
+                    }
+
+                    // Bouton Email Prospection
+                    const jsonKey = 'json_' + url;
+                    if (items[jsonKey] && !btnContainer.querySelector('.view-email-btn')) {
+                        const emailBtn = document.createElement('button');
+                        emailBtn.className = 'btn primary view-email-btn';
+                        emailBtn.textContent = '📧 Email';
+                        emailBtn.style.padding = '4px 10px';
+                        emailBtn.style.fontSize = '0.85rem';
+                        emailBtn.style.backgroundColor = '#8b5cf6'; // Violet pour différencier
+                        emailBtn.style.borderColor = '#8b5cf6';
                         
-                        link.parentElement.appendChild(btn);
+                        emailBtn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            // Déclencher un événement global sur la page pour que app.js l'attrape
+                            window.dispatchEvent(new CustomEvent('ShowLocalsecEmail', {
+                                detail: items[jsonKey]
+                            }));
+                        });
+                        btnContainer.appendChild(emailBtn);
                     }
                 }
             } catch(e) {}
