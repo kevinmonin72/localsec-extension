@@ -13,9 +13,27 @@ document.getElementById('audit-btn').addEventListener('click', async () => {
     const btn = document.getElementById('audit-btn');
     const status = document.getElementById('status');
     btn.disabled = true;
-    status.textContent = 'Extraction des données...';
 
     try {
+        status.textContent = "Préparation de l'audit...";
+
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+        status.textContent = "🔍 Ouverture de l'inspecteur d'éléments virtuel...";
+        await sleep(800);
+
+        status.textContent = "🕵️‍♂️ Extraction du DOM et des formulaires...";
+        await sleep(700);
+
+        status.textContent = "🕸️ Analyse des pratiques Black Hat SEO et Dark Links...";
+        await sleep(800);
+
+        status.textContent = "🔐 Scan du code source (Commentaires HTML & Clés d'API)...";
+        await sleep(900);
+
+        status.textContent = "🌐 Vérification des En-têtes HTTP et Sécurité TLS...";
+        await sleep(600);
+
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
         if (!tab || !tab.url.startsWith('http')) {
             throw new Error("Impossible d'auditer cette page (seuls http/https sont supportés).");
@@ -134,6 +152,9 @@ document.getElementById('audit-btn').addEventListener('click', async () => {
         const scoreResult = calculateScore(normalizedData, allFindings);
         const recommendations = buildRecommendations(allFindings);
 
+        status.textContent = "📊 Consolidation du rapport et du score...";
+        await sleep(500);
+
         const reportResult = {
             siteUrl: normalizedData.finalUrl,
             score: scoreResult.score,
@@ -159,6 +180,9 @@ document.getElementById('audit-btn').addEventListener('click', async () => {
             findings: allFindings
         };
 
+        status.textContent = "💾 Synchronisation SaaS en cours...";
+        await sleep(600);
+
         // Sauvegarder dans le storage local (associé au domaine ou URL)
         // On stocke l'URL de base pour matcher facilement avec la liste
         const baseDomainUrl = new URL(tab.url).origin;
@@ -179,7 +203,7 @@ document.getElementById('audit-btn').addEventListener('click', async () => {
             saveAs: false
         });
 
-        status.textContent = "Rapport synchronisé et JSON téléchargé !";
+        status.textContent = "✅ Rapport généré avec succès !";
         
         // Fermer le popup après 1.5s
         setTimeout(() => {

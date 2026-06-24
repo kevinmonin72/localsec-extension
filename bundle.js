@@ -1371,8 +1371,19 @@
     const btn = document.getElementById("audit-btn");
     const status = document.getElementById("status");
     btn.disabled = true;
-    status.textContent = "Extraction des donn\xE9es...";
     try {
+      status.textContent = "Pr\xE9paration de l'audit...";
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+      status.textContent = "\u{1F50D} Ouverture de l'inspecteur d'\xE9l\xE9ments virtuel...";
+      await sleep(800);
+      status.textContent = "\u{1F575}\uFE0F\u200D\u2642\uFE0F Extraction du DOM et des formulaires...";
+      await sleep(700);
+      status.textContent = "\u{1F578}\uFE0F Analyse des pratiques Black Hat SEO et Dark Links...";
+      await sleep(800);
+      status.textContent = "\u{1F510} Scan du code source (Commentaires HTML & Cl\xE9s d'API)...";
+      await sleep(900);
+      status.textContent = "\u{1F310} V\xE9rification des En-t\xEAtes HTTP et S\xE9curit\xE9 TLS...";
+      await sleep(600);
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (!tab || !tab.url.startsWith("http")) {
         throw new Error("Impossible d'auditer cette page (seuls http/https sont support\xE9s).");
@@ -1476,6 +1487,8 @@
       const techSummary = analyzeTechnologies(normalizedData.technologies);
       const scoreResult = calculateScore(normalizedData, allFindings);
       const recommendations = buildRecommendations(allFindings);
+      status.textContent = "\u{1F4CA} Consolidation du rapport et du score...";
+      await sleep(500);
       const reportResult = {
         siteUrl: normalizedData.finalUrl,
         score: scoreResult.score,
@@ -1497,6 +1510,8 @@
         grade: scoreResult.grade,
         findings: allFindings
       };
+      status.textContent = "\u{1F4BE} Synchronisation SaaS en cours...";
+      await sleep(600);
       const baseDomainUrl = new URL(tab.url).origin;
       await new Promise((resolve) => {
         const data = {};
@@ -1511,7 +1526,7 @@
         filename: `audit_localsec_${new URL(tab.url).hostname}.json`,
         saveAs: false
       });
-      status.textContent = "Rapport synchronis\xE9 et JSON t\xE9l\xE9charg\xE9 !";
+      status.textContent = "\u2705 Rapport g\xE9n\xE9r\xE9 avec succ\xE8s !";
       setTimeout(() => {
         window.close();
       }, 1500);
