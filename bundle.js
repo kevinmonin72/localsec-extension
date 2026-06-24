@@ -3,20 +3,17 @@
   var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, {
     get: (a, b) => (typeof require !== "undefined" ? require : a)[b]
   }) : x)(function(x) {
-    if (typeof require !== "undefined") return require.apply(this, arguments);
+    if (typeof require !== "undefined")
+      return require.apply(this, arguments);
     throw Error('Dynamic require of "' + x + '" is not supported');
   });
   var __commonJS = (cb, mod) => function __require2() {
-    try {
-      return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
-    } catch (e) {
-      throw mod = 0, e;
-    }
+    return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
   };
 
-  // ../lib/analyze-headers.js
+  // ../offline-security-audit/lib/analyze-headers.js
   var require_analyze_headers = __commonJS({
-    "../lib/analyze-headers.js"(exports, module) {
+    "../offline-security-audit/lib/analyze-headers.js"(exports, module) {
       function normalizeHeaders(rawHeaders) {
         if (!rawHeaders || typeof rawHeaders !== "object") {
           return {};
@@ -257,16 +254,17 @@
     }
   });
 
-  // ../lib/analyze-cookies.js
+  // ../offline-security-audit/lib/analyze-cookies.js
   var require_analyze_cookies = __commonJS({
-    "../lib/analyze-cookies.js"(exports, module) {
+    "../offline-security-audit/lib/analyze-cookies.js"(exports, module) {
       function analyzeCookies2(parsedCookies) {
         if (!Array.isArray(parsedCookies)) {
           return [];
         }
         const findings = [];
         for (const cookie of parsedCookies) {
-          if (!cookie || !cookie.name) continue;
+          if (!cookie || !cookie.name)
+            continue;
           const cookieName = cookie.name;
           const isSession = cookie.isSession === true;
           const evidence = `Cookie: ${cookieName}`;
@@ -350,9 +348,9 @@
     }
   });
 
-  // ../lib/analyze-third-parties.js
+  // ../offline-security-audit/lib/analyze-third-parties.js
   var require_analyze_third_parties = __commonJS({
-    "../lib/analyze-third-parties.js"(exports, module) {
+    "../offline-security-audit/lib/analyze-third-parties.js"(exports, module) {
       var CATEGORIES = {
         ANALYTICS: "Analytics",
         ADVERTISING: "Publicit\xE9",
@@ -446,7 +444,8 @@
         }
       ];
       function extractHostname(input) {
-        if (!input || typeof input !== "string") return "";
+        if (!input || typeof input !== "string")
+          return "";
         try {
           const urlStr = input.startsWith("http") ? input : `http://${input}`;
           return new URL(urlStr).hostname;
@@ -462,7 +461,8 @@
         const detectedServices = /* @__PURE__ */ new Set();
         const results = [];
         for (const rawEntry of domainsList) {
-          if (typeof rawEntry !== "string") continue;
+          if (typeof rawEntry !== "string")
+            continue;
           const hostname = extractHostname(rawEntry);
           for (const rule of rules) {
             if (rule.match.test(hostname) || rule.match.test(rawEntry)) {
@@ -503,9 +503,9 @@
     }
   });
 
-  // ../lib/analyze-scripts.js
+  // ../offline-security-audit/lib/analyze-scripts.js
   var require_analyze_scripts = __commonJS({
-    "../lib/analyze-scripts.js"(exports, module) {
+    "../offline-security-audit/lib/analyze-scripts.js"(exports, module) {
       var SCRIPT_FAMILIES = [
         {
           name: "Google Analytics",
@@ -556,7 +556,8 @@
         }
         const inventory = /* @__PURE__ */ new Map();
         for (const rawUrl of scriptsList) {
-          if (typeof rawUrl !== "string" || !rawUrl.trim()) continue;
+          if (typeof rawUrl !== "string" || !rawUrl.trim())
+            continue;
           let urlObj;
           try {
             urlObj = new URL(rawUrl.trim());
@@ -597,8 +598,10 @@
           });
         }
         results.sort((a, b) => {
-          if (a.family === "Autre (Non reconnu)") return 1;
-          if (b.family === "Autre (Non reconnu)") return -1;
+          if (a.family === "Autre (Non reconnu)")
+            return 1;
+          if (b.family === "Autre (Non reconnu)")
+            return -1;
           return a.family.localeCompare(b.family);
         });
         return results;
@@ -623,9 +626,9 @@
     }
   });
 
-  // ../lib/analyze-technologies.js
+  // ../offline-security-audit/lib/analyze-technologies.js
   var require_analyze_technologies = __commonJS({
-    "../lib/analyze-technologies.js"(exports, module) {
+    "../offline-security-audit/lib/analyze-technologies.js"(exports, module) {
       var CATEGORIES = {
         CMS: "CMS",
         JS_FRAMEWORK: "Framework JS",
@@ -689,14 +692,16 @@
           summary[cat] = [];
         }
         for (const item of techList) {
-          if (!item) continue;
+          if (!item)
+            continue;
           let techName = "";
           if (typeof item === "string") {
             techName = item;
           } else if (typeof item === "object") {
             techName = item.name || Object.values(item).join(" ");
           }
-          if (!techName.trim()) continue;
+          if (!techName.trim())
+            continue;
           let matchedCategory = CATEGORIES.OTHER;
           for (const rule of TECH_DICTIONARY) {
             if (rule.regex.test(techName)) {
@@ -735,9 +740,9 @@
     }
   });
 
-  // ../lib/score-site.js
+  // ../offline-security-audit/lib/score-site.js
   var require_score_site = __commonJS({
-    "../lib/score-site.js"(exports, module) {
+    "../offline-security-audit/lib/score-site.js"(exports, module) {
       var GRADE_THRESHOLDS = [
         { min: 90, grade: "A" },
         { min: 70, grade: "B" },
@@ -823,9 +828,9 @@
     }
   });
 
-  // ../lib/build-recommendations.js
+  // ../offline-security-audit/lib/build-recommendations.js
   var require_build_recommendations = __commonJS({
-    "../lib/build-recommendations.js"(exports, module) {
+    "../offline-security-audit/lib/build-recommendations.js"(exports, module) {
       var PRIORITIES = {
         IMMEDIATE: "imm\xE9diat",
         // Action critique (arrêt de production, faille exploitable directement)
@@ -835,10 +840,13 @@
         // Action de durcissement (bonne pratique de sécurité en profondeur)
       };
       function determinePriority(severity) {
-        if (!severity) return PRIORITIES.IMPROVEMENT;
+        if (!severity)
+          return PRIORITIES.IMPROVEMENT;
         const sev = severity.toLowerCase();
-        if (sev === "critical") return PRIORITIES.IMMEDIATE;
-        if (sev === "high" || sev === "medium") return PRIORITIES.IMPORTANT;
+        if (sev === "critical")
+          return PRIORITIES.IMMEDIATE;
+        if (sev === "high" || sev === "medium")
+          return PRIORITIES.IMPORTANT;
         return PRIORITIES.IMPROVEMENT;
       }
       function getPedagogicalTheme(finding) {
@@ -871,9 +879,11 @@
           [PRIORITIES.IMPROVEMENT]: /* @__PURE__ */ new Map()
         };
         for (const finding of allFindings) {
-          if (!finding) continue;
+          if (!finding)
+            continue;
           const actionText = finding.recommendation || finding.justification;
-          if (!actionText || actionText.trim() === "") continue;
+          if (!actionText || actionText.trim() === "")
+            continue;
           const priority = determinePriority(finding.severity || finding.riskLevel);
           const theme = getPedagogicalTheme(finding);
           if (!grouped[priority].has(theme)) {
@@ -917,26 +927,21 @@
     }
   });
 
-  // ../lib/render-report.js
+  // ../offline-security-audit/lib/render-report.js
   var require_render_report = __commonJS({
-    "../lib/render-report.js"(exports, module) {
+    "../offline-security-audit/lib/render-report.js"(exports, module) {
       function getGradeColor(grade) {
         switch (grade) {
           case "A":
             return "#2ecc71";
-          // Vert
           case "B":
             return "#3498db";
-          // Bleu
           case "C":
             return "#f1c40f";
-          // Jaune
           case "D":
             return "#e67e22";
-          // Orange
           case "F":
             return "#e74c3c";
-          // Rouge
           default:
             return "#95a5a6";
         }
@@ -1167,10 +1172,14 @@
             html += `<ul class="info-list">`;
             for (const cookie of report.cookies) {
               const flags = [];
-              if (cookie.secure) flags.push('<span class="tag">Secure</span>');
-              if (cookie.httpOnly) flags.push('<span class="tag">HttpOnly</span>');
-              if (cookie.sameSite) flags.push(`<span class="tag">SameSite=${cookie.sameSite}</span>`);
-              if (cookie.isSession) flags.push('<span class="tag tag-session">Session</span>');
+              if (cookie.secure)
+                flags.push('<span class="tag">Secure</span>');
+              if (cookie.httpOnly)
+                flags.push('<span class="tag">HttpOnly</span>');
+              if (cookie.sameSite)
+                flags.push(`<span class="tag">SameSite=${cookie.sameSite}</span>`);
+              if (cookie.isSession)
+                flags.push('<span class="tag tag-session">Session</span>');
               html += `<li><strong>${cookie.name}</strong> &nbsp; ${flags.length > 0 ? flags.join("") : "<em>Aucune protection (ni Secure, ni HttpOnly)</em>"}</li>`;
             }
             html += `</ul>`;
@@ -1229,6 +1238,60 @@
     }
   });
 
+  // ../offline-security-audit/lib/analyze-dom.js
+  var require_analyze_dom = __commonJS({
+    "../offline-security-audit/lib/analyze-dom.js"(exports, module) {
+      function analyzeDom2(domData, pageUrl) {
+        const findings = [];
+        if (!domData)
+          return findings;
+        if (pageUrl && pageUrl.startsWith("https:")) {
+          domData.forms.forEach((form) => {
+            if (!form.isActionHttps) {
+              findings.push({
+                title: "Formulaire sur protocole HTTP non s\xE9curis\xE9",
+                description: `Le formulaire pointant vers "${form.action}" transmet des donn\xE9es via HTTP en clair depuis une page HTTPS (Mixed Content).`,
+                severity: "critical",
+                tags: ["dom", "mixed-content", "privacy"]
+              });
+            }
+          });
+        }
+        const hasFormsWithPassword = domData.forms.some((f) => f.hasPasswordField);
+        if (hasFormsWithPassword && pageUrl && !pageUrl.startsWith("https:")) {
+          findings.push({
+            title: "Mot de passe saisi sur HTTP (En clair)",
+            description: "Un champ de mot de passe est pr\xE9sent sur une page non-s\xE9curis\xE9e (HTTP). Les identifiants peuvent \xEAtre intercept\xE9s.",
+            severity: "critical",
+            tags: ["dom", "password", "privacy"]
+          });
+        }
+        if (domData.sensitiveUrl) {
+          findings.push({
+            title: "Fuite potentielle de donn\xE9es dans l'URL",
+            description: "L'URL de la page contient des mots-cl\xE9s sensibles (token=, key=, password=). Ces donn\xE9es peuvent fuiter via l'en-t\xEAte Referer vers des sites tiers.",
+            severity: "high",
+            tags: ["dom", "privacy", "referer"]
+          });
+        }
+        const suspectHidden = domData.hiddenInputs.filter((i) => {
+          const name = i.name.toLowerCase();
+          return name.includes("token") || name.includes("key") || name.includes("secret") || name.includes("pwd");
+        });
+        if (suspectHidden.length > 0) {
+          findings.push({
+            title: "Pr\xE9sence de tokens/cl\xE9s dans les champs cach\xE9s",
+            description: `Les champs cach\xE9s suivants semblent contenir des donn\xE9es sensibles ou des jetons : ${suspectHidden.map((i) => i.name).join(", ")}.`,
+            severity: "low",
+            tags: ["dom", "tokens"]
+          });
+        }
+        return findings;
+      }
+      module.exports = { analyzeDom: analyzeDom2 };
+    }
+  });
+
   // popup-src.js
   var { analyzeHeaders } = require_analyze_headers();
   var { analyzeCookies } = require_analyze_cookies();
@@ -1238,6 +1301,7 @@
   var { calculateScore } = require_score_site();
   var { buildRecommendations } = require_build_recommendations();
   var { renderHtmlReport } = require_render_report();
+  var { analyzeDom } = require_analyze_dom();
   document.getElementById("audit-btn").addEventListener("click", async () => {
     const btn = document.getElementById("audit-btn");
     const status = document.getElementById("status");
@@ -1273,6 +1337,16 @@
           }).filter(Boolean));
           const metaGen = document.querySelector('meta[name="generator"]');
           const technologies = metaGen ? [metaGen.content] : [];
+          const formsData = Array.from(document.querySelectorAll("form")).map((f) => {
+            const action = f.getAttribute("action") || window.location.href;
+            const isActionHttps = action.startsWith("https") || action.startsWith("/");
+            const inputs = Array.from(f.querySelectorAll("input, select, textarea")).map((i) => i.name || i.id || "unknown");
+            const hasPasswordField = f.querySelector('input[type="password"]') !== null;
+            return { action, method: f.getAttribute("method") || "GET", isActionHttps, hasPasswordField, inputs };
+          });
+          const hiddenInputs = Array.from(document.querySelectorAll('input[type="hidden"]')).map((i) => {
+            return { name: i.name || i.id, value: i.value };
+          });
           let headers = {};
           try {
             const res = await fetch(document.location.href, { method: "HEAD" });
@@ -1281,7 +1355,17 @@
             });
           } catch (e) {
           }
-          return { scripts, domains: Array.from(domains), technologies, headers };
+          return {
+            scripts,
+            domains: Array.from(domains),
+            technologies,
+            headers,
+            domAnalysis: {
+              forms: formsData,
+              hiddenInputs,
+              sensitiveUrl: window.location.search.includes("token=") || window.location.search.includes("key=") || window.location.search.includes("password=")
+            }
+          };
         }
       });
       const pageData = results[0].result;
@@ -1293,16 +1377,17 @@
         setCookies: [],
         // géré par l'API chrome.cookies
         tls: null,
-        // TLS n'est pas facilement accessible via l'API standard, on l'omet
         thirdPartyDomains: pageData.domains,
         thirdPartyScripts: pageData.scripts,
-        technologies: pageData.technologies
+        technologies: pageData.technologies,
+        domAnalysis: pageData.domAnalysis
       };
       let allFindings = [];
       allFindings.push(...analyzeHeaders(normalizedData.headers));
       allFindings.push(...analyzeCookies(parsedCookies));
       const allThirdPartyStrings = [...normalizedData.thirdPartyDomains, ...normalizedData.thirdPartyScripts];
       allFindings.push(...analyzeThirdParties(allThirdPartyStrings));
+      allFindings.push(...analyzeDom(normalizedData.domAnalysis, normalizedData.url));
       const scriptsInventory = analyzeScripts(normalizedData.thirdPartyScripts);
       const techSummary = analyzeTechnologies(normalizedData.technologies);
       const scoreResult = calculateScore(normalizedData, allFindings);

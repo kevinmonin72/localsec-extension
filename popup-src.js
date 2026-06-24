@@ -1,11 +1,13 @@
-const { analyzeHeaders } = require('../lib/analyze-headers');
-const { analyzeCookies } = require('../lib/analyze-cookies');
-const { analyzeThirdParties } = require('../lib/analyze-third-parties');
-const { analyzeScripts } = require('../lib/analyze-scripts');
-const { analyzeTechnologies } = require('../lib/analyze-technologies');
-const { calculateScore } = require('../lib/score-site');
-const { buildRecommendations } = require('../lib/build-recommendations');
-const { renderHtmlReport } = require('../lib/render-report');
+const { analyzeHeaders } = require('../offline-security-audit/lib/analyze-headers');
+const { analyzeCookies } = require('../offline-security-audit/lib/analyze-cookies');
+const { analyzeThirdParties } = require('../offline-security-audit/lib/analyze-third-parties');
+const { analyzeScripts } = require('../offline-security-audit/lib/analyze-scripts');
+const { analyzeTechnologies } = require('../offline-security-audit/lib/analyze-technologies');
+const { calculateScore } = require('../offline-security-audit/lib/score-site');
+const { buildRecommendations } = require('../offline-security-audit/lib/build-recommendations');
+const { renderHtmlReport } = require('../offline-security-audit/lib/render-report');
+
+const { analyzeDom } = require('../offline-security-audit/lib/analyze-dom');
 
 document.getElementById('audit-btn').addEventListener('click', async () => {
     const btn = document.getElementById('audit-btn');
@@ -34,7 +36,7 @@ document.getElementById('audit-btn').addEventListener('click', async () => {
             };
         });
 
-        // Injecter un script pour récupérer les headers HTTP (via fetch de la page elle-même) et les scripts DOM
+        // Injecter un script pour récupérer les headers HTTP et analyser le DOM (Formulaires, scripts, etc.)
         const results = await chrome.scripting.executeScript({
             target: { tabId: tab.id },
             func: async () => {
@@ -44,6 +46,19 @@ document.getElementById('audit-btn').addEventListener('click', async () => {
                 const metaGen = document.querySelector('meta[name="generator"]');
                 const technologies = metaGen ? [metaGen.content] : [];
 
+                // Analyse DOM Passive
+                const formsData = Array.from(document.querySelectorAll('form')).map(f => {
+                    const action = f.getAttribute('action') || window.location.href;
+                    const isActionHttps = action.startsWith('https') || action.startsWith('/');
+                    const inputs = Array.from(f.querySelectorAll('input, select, textarea')).map(i => i.name || i.id || 'unknown');
+                    const hasPasswordField = f.querySelector('input[type="password"]') !== null;
+                    return { action, method: f.getAttribute('method') || 'GET', isActionHttps, hasPasswordField, inputs };
+                });
+
+                const hiddenInputs = Array.from(document.querySelectorAll('input[type="hidden"]')).map(i => {
+                    return { name: i.name || i.id, value: i.value };
+                });
+
                 let headers = {};
                 try {
                     const res = await fetch(document.location.href, { method: 'HEAD' });
@@ -52,7 +67,17 @@ document.getElementById('audit-btn').addEventListener('click', async () => {
                     });
                 } catch(e) {}
 
-                return { scripts, domains: Array.from(domains), technologies, headers };
+                return { 
+                    scripts, 
+                    domains: Array.from(domains), 
+                    technologies, 
+                    headers,
+                    domAnalysis: {
+                        forms: formsData,
+                        hiddenInputs: hiddenInputs,
+                        sensitiveUrl: window.location.search.includes('token=') || window.location.search.includes('key=') || window.location.search.includes('password=')
+                    }
+                };
             }
         });
 
@@ -66,18 +91,20 @@ document.getElementById('audit-btn').addEventListener('click', async () => {
             finalUrl: tab.url,
             headers: pageData.headers,
             setCookies: [], // géré par l'API chrome.cookies
-            tls: null, // TLS n'est pas facilement accessible via l'API standard, on l'omet
+            tls: null, 
             thirdPartyDomains: pageData.domains,
             thirdPartyScripts: pageData.scripts,
-            technologies: pageData.technologies
+            technologies: pageData.technologies,
+            domAnalysis: pageData.domAnalysis
         };
 
         let allFindings = [];
         allFindings.push(...analyzeHeaders(normalizedData.headers));
-        // Notre analyseur de cookies attend un tableau formatté, on adapte
         allFindings.push(...analyzeCookies(parsedCookies));
         const allThirdPartyStrings = [...normalizedData.thirdPartyDomains, ...normalizedData.thirdPartyScripts];
         allFindings.push(...analyzeThirdParties(allThirdPartyStrings));
+        allFindings.push(...analyzeDom(normalizedData.domAnalysis, normalizedData.url));
+        
         const scriptsInventory = analyzeScripts(normalizedData.thirdPartyScripts);
         const techSummary = analyzeTechnologies(normalizedData.technologies);
 
