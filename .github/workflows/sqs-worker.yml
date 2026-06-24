@@ -1,0 +1,37 @@
+name: SQS Audit Worker
+
+on:
+  schedule:
+    # Déclenchement toutes les 5 minutes
+    - cron: '*/5 * * * *'
+  workflow_dispatch: # Permet de déclencher manuellement depuis l'interface GitHub
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout du dépôt (contient l'extension et les scripts)
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Installer les dépendances NPM
+        run: npm install
+
+      # Installation des librairies Linux nécessaires pour Puppeteer
+      - name: Setup Puppeteer/Chrome
+        run: |
+          npx puppeteer browsers install chrome
+          sudo apt-get update
+          sudo apt-get install -y libnss3 libatk-bridge2.0-0 libxcomposite1 libxrandr2 libgbm-dev libasound2
+
+      - name: Exécuter le Worker SQS
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          SQS_QUEUE_URL: ${{ secrets.SQS_QUEUE_URL }}
+        run: node sqs_worker.js
