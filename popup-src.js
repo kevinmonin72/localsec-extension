@@ -96,6 +96,16 @@ document.getElementById('audit-btn').addEventListener('click', async () => {
 
                 const pageSource = document.documentElement.innerHTML || "";
                 const potentialApiKeys = (pageSource.match(/(AIza[0-9A-Za-z-_]{35}|AKIA[0-9A-Z]{16}|sk_live_[0-9a-zA-Z]{24})/g) || []);
+                
+                // --- NOUVELLE RECHERCHE PASSIVE ---
+                // Extraction des emails exposés sur la page
+                const exposedEmails = (pageSource.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/g) || []);
+                
+                // Récupération des clés LocalStorage et SessionStorage
+                const storageKeys = {
+                    local: Object.keys(window.localStorage || {}),
+                    session: Object.keys(window.sessionStorage || {})
+                };
 
                 let headers = {};
                 try {
@@ -116,6 +126,8 @@ document.getElementById('audit-btn').addEventListener('click', async () => {
                         hiddenLinks: hiddenLinks,
                         htmlComments: htmlComments,
                         potentialApiKeys: [...new Set(potentialApiKeys)],
+                        exposedEmails: [...new Set(exposedEmails)],
+                        storageKeys: storageKeys,
                         sensitiveUrl: window.location.search.includes('token=') || window.location.search.includes('key=') || window.location.search.includes('password=')
                     }
                 };

@@ -1351,6 +1351,30 @@
             });
           }
         }
+        if (domData.exposedEmails && domData.exposedEmails.length > 0) {
+          findings.push({
+            title: "Adresses e-mail expos\xE9es publiquement",
+            description: `Le code source de la page contient ${domData.exposedEmails.length} adresse(s) e-mail en clair (ex: ${domData.exposedEmails[0]}). Elles peuvent \xEAtre aspir\xE9es par des robots spammeurs.`,
+            recommendation: "Masquez les adresses e-mail (ex: en utilisant des formulaires de contact) ou obfusquez-les techniquement pour \xE9viter le scraping par des bots.",
+            severity: "low",
+            tags: ["dom", "privacy", "email"]
+          });
+        }
+        if (domData.storageKeys) {
+          const suspectStorage = [...domData.storageKeys.local || [], ...domData.storageKeys.session || []].filter((k) => {
+            const low = k.toLowerCase();
+            return low.includes("token") || low.includes("jwt") || low.includes("auth") || low.includes("session");
+          });
+          if (suspectStorage.length > 0) {
+            findings.push({
+              title: "Stockage potentiel de tokens dans Local/Session Storage",
+              description: `Des cl\xE9s suspectes (jetons d'authentification) ont \xE9t\xE9 d\xE9tect\xE9es dans le stockage local du navigateur : ${suspectStorage.join(", ")}.`,
+              recommendation: "Le LocalStorage est vuln\xE9rable aux attaques XSS. Il est fortement recommand\xE9 d'utiliser des cookies HttpOnly pour stocker les jetons de session (JWT, Auth).",
+              severity: "medium",
+              tags: ["dom", "privacy", "localstorage"]
+            });
+          }
+        }
         return findings;
       }
       module.exports = { analyzeDom: analyzeDom2 };
@@ -1439,6 +1463,11 @@
           }
           const pageSource = document.documentElement.innerHTML || "";
           const potentialApiKeys = pageSource.match(/(AIza[0-9A-Za-z-_]{35}|AKIA[0-9A-Z]{16}|sk_live_[0-9a-zA-Z]{24})/g) || [];
+          const exposedEmails = pageSource.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/g) || [];
+          const storageKeys = {
+            local: Object.keys(window.localStorage || {}),
+            session: Object.keys(window.sessionStorage || {})
+          };
           let headers = {};
           try {
             const res = await fetch(document.location.href, { method: "HEAD" });
@@ -1458,6 +1487,8 @@
               hiddenLinks,
               htmlComments,
               potentialApiKeys: [...new Set(potentialApiKeys)],
+              exposedEmails: [...new Set(exposedEmails)],
+              storageKeys,
               sensitiveUrl: window.location.search.includes("token=") || window.location.search.includes("key=") || window.location.search.includes("password=")
             }
           };
