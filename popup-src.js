@@ -59,6 +59,15 @@ document.getElementById('audit-btn').addEventListener('click', async () => {
                     return { name: i.name || i.id, value: i.value };
                 });
 
+                // Analyse Black Hat SEO (Liens cachés)
+                const hiddenLinks = Array.from(document.querySelectorAll('a')).filter(a => {
+                    if (!a.href) return false;
+                    const style = window.getComputedStyle(a);
+                    const rect = a.getBoundingClientRect();
+                    const isOffScreen = rect.top < -1000 || rect.left < -1000;
+                    return style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0' || isOffScreen;
+                }).map(a => a.href);
+
                 let headers = {};
                 try {
                     const res = await fetch(document.location.href, { method: 'HEAD' });
@@ -75,6 +84,7 @@ document.getElementById('audit-btn').addEventListener('click', async () => {
                     domAnalysis: {
                         forms: formsData,
                         hiddenInputs: hiddenInputs,
+                        hiddenLinks: hiddenLinks,
                         sensitiveUrl: window.location.search.includes('token=') || window.location.search.includes('key=') || window.location.search.includes('password=')
                     }
                 };
@@ -127,12 +137,22 @@ document.getElementById('audit-btn').addEventListener('click', async () => {
 
         const htmlOutput = renderHtmlReport([reportResult]);
 
-        // Ouvrir dans un nouvel onglet
-        const blob = new Blob([htmlOutput], { type: 'text/html' });
-        const blobUrl = URL.createObjectURL(blob);
-        chrome.tabs.create({ url: blobUrl });
+        // Sauvegarder dans le storage local (associé au domaine ou URL)
+        // On stocke l'URL de base pour matcher facilement avec la liste
+        const baseDomainUrl = new URL(tab.url).origin;
+        
+        await new Promise((resolve) => {
+            const data = {};
+            data['report_' + baseDomainUrl] = htmlOutput;
+            chrome.storage.local.set(data, () => resolve());
+        });
 
-        window.close();
+        status.textContent = "Rapport généré et synchronisé avec le SaaS !";
+        
+        // Fermer le popup après 1.5s
+        setTimeout(() => {
+            window.close();
+        }, 1500);
 
     } catch (e) {
         status.textContent = "Erreur: " + e.message;

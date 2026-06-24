@@ -3,11 +3,17 @@
   "name": "LocalSec Audit - 1 Click",
   "version": "1.0",
   "description": "Auditez la sécurité de n'importe quel site instantanément et 100% hors-ligne.",
-  "permissions": ["activeTab", "scripting", "cookies"],
+  "permissions": ["activeTab", "scripting", "cookies", "storage"],
   "host_permissions": ["<all_urls>"],
   "action": {
     "default_popup": "popup.html"
   },
+  "content_scripts": [
+    {
+      "matches": ["https://kevinmonin72.github.io/offline-security-audit/*"],
+      "js": ["saas-injector.js"]
+    }
+  ],
   "icons": {
     "128": "icon.png"
   }

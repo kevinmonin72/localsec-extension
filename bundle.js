@@ -1286,6 +1286,14 @@
             tags: ["dom", "tokens"]
           });
         }
+        if (domData.hiddenLinks && domData.hiddenLinks.length > 0) {
+          findings.push({
+            title: "Pratique Black Hat SEO (Liens cach\xE9s d\xE9tect\xE9s)",
+            description: `Le site contient ${domData.hiddenLinks.length} lien(s) rendu(s) invisible(s) \xE0 l'utilisateur (display:none, opacit\xE9 \xE0 0, hors de l'\xE9cran). C'est souvent utilis\xE9 pour manipuler le r\xE9f\xE9rencement (Dark links) ou inject\xE9 par des malwares.`,
+            severity: "medium",
+            tags: ["dom", "seo", "black-hat"]
+          });
+        }
         return findings;
       }
       module.exports = { analyzeDom: analyzeDom2 };
@@ -1347,6 +1355,14 @@
           const hiddenInputs = Array.from(document.querySelectorAll('input[type="hidden"]')).map((i) => {
             return { name: i.name || i.id, value: i.value };
           });
+          const hiddenLinks = Array.from(document.querySelectorAll("a")).filter((a) => {
+            if (!a.href)
+              return false;
+            const style = window.getComputedStyle(a);
+            const rect = a.getBoundingClientRect();
+            const isOffScreen = rect.top < -1e3 || rect.left < -1e3;
+            return style.display === "none" || style.visibility === "hidden" || style.opacity === "0" || isOffScreen;
+          }).map((a) => a.href);
           let headers = {};
           try {
             const res = await fetch(document.location.href, { method: "HEAD" });
@@ -1363,6 +1379,7 @@
             domAnalysis: {
               forms: formsData,
               hiddenInputs,
+              hiddenLinks,
               sensitiveUrl: window.location.search.includes("token=") || window.location.search.includes("key=") || window.location.search.includes("password=")
             }
           };
@@ -1406,10 +1423,16 @@
         findings: allFindings
       };
       const htmlOutput = renderHtmlReport([reportResult]);
-      const blob = new Blob([htmlOutput], { type: "text/html" });
-      const blobUrl = URL.createObjectURL(blob);
-      chrome.tabs.create({ url: blobUrl });
-      window.close();
+      const baseDomainUrl = new URL(tab.url).origin;
+      await new Promise((resolve) => {
+        const data = {};
+        data["report_" + baseDomainUrl] = htmlOutput;
+        chrome.storage.local.set(data, () => resolve());
+      });
+      status.textContent = "Rapport g\xE9n\xE9r\xE9 et synchronis\xE9 avec le SaaS !";
+      setTimeout(() => {
+        window.close();
+      }, 1500);
     } catch (e) {
       status.textContent = "Erreur: " + e.message;
       btn.disabled = false;
