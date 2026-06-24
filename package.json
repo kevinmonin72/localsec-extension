@@ -1,10 +1,10 @@
 {
-  "name": "localsec-automation",
+  "name": "localsec-automation-sqs",
   "version": "1.0.0",
-  "description": "Architecture de file d'attente RabbitMQ avec Puppeteer",
-  "main": "worker.js",
+  "description": "Worker Puppeteer avec Amazon SQS pour GitHub Actions",
+  "main": "sqs_worker.js",
   "dependencies": {
-    "amqplib": "^0.10.3",
+    "@aws-sdk/client-sqs": "^3.500.0",
     "puppeteer": "^22.0.0"
   }
 }
