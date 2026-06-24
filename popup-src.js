@@ -160,7 +160,25 @@ document.getElementById('audit-btn').addEventListener('click', async () => {
             chrome.storage.local.set(data, () => resolve());
         });
 
-        status.textContent = "Rapport généré et synchronisé avec le SaaS !";
+        // --- EXPORT JSON POUR EMAIL COMMERCIAL ---
+        const exportData = {
+            isLocalsecAudit: true,
+            siteUrl: normalizedData.finalUrl,
+            score: scoreResult.score,
+            grade: scoreResult.grade,
+            findings: allFindings
+        };
+        
+        const jsonBlob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const jsonUrl = URL.createObjectURL(jsonBlob);
+        
+        chrome.downloads.download({
+            url: jsonUrl,
+            filename: `audit_localsec_${new URL(tab.url).hostname}.json`,
+            saveAs: false
+        });
+
+        status.textContent = "Rapport synchronisé et JSON téléchargé !";
         
         // Fermer le popup après 1.5s
         setTimeout(() => {

@@ -1496,7 +1496,21 @@
         data["report_" + baseDomainUrl] = htmlOutput;
         chrome.storage.local.set(data, () => resolve());
       });
-      status.textContent = "Rapport g\xE9n\xE9r\xE9 et synchronis\xE9 avec le SaaS !";
+      const exportData = {
+        isLocalsecAudit: true,
+        siteUrl: normalizedData.finalUrl,
+        score: scoreResult.score,
+        grade: scoreResult.grade,
+        findings: allFindings
+      };
+      const jsonBlob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+      const jsonUrl = URL.createObjectURL(jsonBlob);
+      chrome.downloads.download({
+        url: jsonUrl,
+        filename: `audit_localsec_${new URL(tab.url).hostname}.json`,
+        saveAs: false
+      });
+      status.textContent = "Rapport synchronis\xE9 et JSON t\xE9l\xE9charg\xE9 !";
       setTimeout(() => {
         window.close();
       }, 1500);
