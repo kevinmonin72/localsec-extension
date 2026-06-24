@@ -1327,6 +1327,30 @@
             tags: ["dom", "seo", "black-hat"]
           });
         }
+        if (domData.potentialApiKeys && domData.potentialApiKeys.length > 0) {
+          findings.push({
+            title: "Fuite de cl\xE9s d'API dans le code source",
+            description: `Le code source de la page (ou un script en ligne) contient des cha\xEEnes de caract\xE8res ressemblant \xE0 des cl\xE9s d'API (Stripe, Google, AWS) : ${domData.potentialApiKeys.join(", ")}`,
+            recommendation: "R\xE9voquez ces cl\xE9s imm\xE9diatement. Le code front-end ne doit jamais contenir de cl\xE9s secr\xE8tes. Utilisez un backend pour faire vos appels d'API.",
+            severity: "critical",
+            tags: ["dom", "source-code", "api-key"]
+          });
+        }
+        if (domData.htmlComments && domData.htmlComments.length > 0) {
+          const suspectComments = domData.htmlComments.filter((c) => {
+            const low = c.toLowerCase();
+            return low.includes("password") || low.includes("pwd") || low.includes("secret") || low.includes("todo") || low.includes("fixme") || low.includes("admin") || low.includes("test");
+          });
+          if (suspectComments.length > 0) {
+            findings.push({
+              title: "Informations sensibles dans les commentaires HTML",
+              description: `Des commentaires HTML (<!-- ... -->) laiss\xE9s par les d\xE9veloppeurs contiennent des mots-cl\xE9s suspects (TODO, password, admin, etc.), r\xE9v\xE9lant des informations sur l'architecture.`,
+              recommendation: "Nettoyez vos templates HTML en production pour supprimer les commentaires de d\xE9veloppement et les instructions internes.",
+              severity: "low",
+              tags: ["dom", "source-code", "comments"]
+            });
+          }
+        }
         return findings;
       }
       module.exports = { analyzeDom: analyzeDom2 };
@@ -1396,6 +1420,14 @@
             const isOffScreen = rect.top < -1e3 || rect.left < -1e3;
             return style.display === "none" || style.visibility === "hidden" || style.opacity === "0" || isOffScreen;
           }).map((a) => a.href);
+          const htmlComments = [];
+          const iterator = document.createNodeIterator(document.documentElement, NodeFilter.SHOW_COMMENT, null, false);
+          let curNode;
+          while (curNode = iterator.nextNode()) {
+            htmlComments.push(curNode.nodeValue);
+          }
+          const pageSource = document.documentElement.innerHTML || "";
+          const potentialApiKeys = pageSource.match(/(AIza[0-9A-Za-z-_]{35}|AKIA[0-9A-Z]{16}|sk_live_[0-9a-zA-Z]{24})/g) || [];
           let headers = {};
           try {
             const res = await fetch(document.location.href, { method: "HEAD" });
@@ -1413,6 +1445,8 @@
               forms: formsData,
               hiddenInputs,
               hiddenLinks,
+              htmlComments,
+              potentialApiKeys: [...new Set(potentialApiKeys)],
               sensitiveUrl: window.location.search.includes("token=") || window.location.search.includes("key=") || window.location.search.includes("password=")
             }
           };

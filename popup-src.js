@@ -68,6 +68,17 @@ document.getElementById('audit-btn').addEventListener('click', async () => {
                     return style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0' || isOffScreen;
                 }).map(a => a.href);
 
+                // Analyse du Code Source / Inspecteur (Commentaires HTML et inline secrets)
+                const htmlComments = [];
+                const iterator = document.createNodeIterator(document.documentElement, NodeFilter.SHOW_COMMENT, null, false);
+                let curNode;
+                while (curNode = iterator.nextNode()) {
+                    htmlComments.push(curNode.nodeValue);
+                }
+
+                const pageSource = document.documentElement.innerHTML || "";
+                const potentialApiKeys = (pageSource.match(/(AIza[0-9A-Za-z-_]{35}|AKIA[0-9A-Z]{16}|sk_live_[0-9a-zA-Z]{24})/g) || []);
+
                 let headers = {};
                 try {
                     const res = await fetch(document.location.href, { method: 'HEAD' });
@@ -85,6 +96,8 @@ document.getElementById('audit-btn').addEventListener('click', async () => {
                         forms: formsData,
                         hiddenInputs: hiddenInputs,
                         hiddenLinks: hiddenLinks,
+                        htmlComments: htmlComments,
+                        potentialApiKeys: [...new Set(potentialApiKeys)],
                         sensitiveUrl: window.location.search.includes('token=') || window.location.search.includes('key=') || window.location.search.includes('password=')
                     }
                 };
