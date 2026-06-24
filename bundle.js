@@ -789,6 +789,16 @@
               }
             } else if (finding.type === "Publicit\xE9") {
               applyPenalty(15, `Tracker publicitaire ou reciblage d\xE9tect\xE9 (${finding.service})`, `THIRDPARTY_ADS_${finding.service}`);
+            } else if (finding.tags && finding.tags.includes("dom")) {
+              if (finding.severity === "critical") {
+                applyPenalty(25, finding.title, "DOM_CRITICAL");
+              } else if (finding.severity === "high") {
+                applyPenalty(15, finding.title, "DOM_HIGH");
+              } else if (finding.severity === "medium") {
+                applyPenalty(10, finding.title, "DOM_MEDIUM");
+              } else {
+                applyPenalty(5, finding.title, "DOM_LOW");
+              }
             } else if (finding.type === "Cleartext Protocol" && (!siteData || !siteData.finalUrl || !siteData.finalUrl.startsWith("http://"))) {
               applyPenalty(30, "Protocole en clair (HTTP) d\xE9tect\xE9 manuellement", "MANUAL_HTTP_CLEARTEXT");
             }
@@ -862,6 +872,9 @@
         }
         if (rawTheme === "Privacy & Data Flow" || finding.type === "Publicit\xE9" || finding.type === "Session Replay") {
           return "Confidentialit\xE9 et Traceurs Tiers";
+        }
+        if (finding.tags && finding.tags.includes("dom")) {
+          return "S\xE9curit\xE9 Applicative & DOM";
         }
         return rawTheme;
       }
@@ -1186,6 +1199,21 @@
           } else {
             html += `<p>Aucun cookie d\xE9tect\xE9 par l'audit passif sur cette page.</p>`;
           }
+          html += `<h4 class="section-title">\u{1F575}\uFE0F\u200D\u2642\uFE0F S\xE9curit\xE9 Applicative, DOM & SEO</h4>`;
+          const domFindings = report.findings ? report.findings.filter((f) => f.tags && f.tags.includes("dom")) : [];
+          if (domFindings.length > 0) {
+            html += `<ul class="info-list">`;
+            for (const f of domFindings) {
+              const riskColor = f.severity === "critical" ? "#e74c3c" : f.severity === "high" ? "#e67e22" : "#f1c40f";
+              html += `<li>
+                            <strong style="color: ${riskColor}">${f.title}</strong> 
+                            <div style="margin-top: 5px; color: #7f8c8d; font-size: 0.95em;">${f.description}</div>
+                         </li>`;
+            }
+            html += `</ul>`;
+          } else {
+            html += `<p>Aucune faille passive d\xE9tect\xE9e au niveau du DOM (Formulaires, SEO, Mixed Content).</p>`;
+          }
           html += `<h4 class="section-title">\u{1F310} \xC9cosyst\xE8me Tiers & Fuite de donn\xE9es</h4>`;
           if (report.thirdParties && report.thirdParties.length > 0) {
             html += `<ul class="info-list">`;
@@ -1251,6 +1279,7 @@
               findings.push({
                 title: "Formulaire sur protocole HTTP non s\xE9curis\xE9",
                 description: `Le formulaire pointant vers "${form.action}" transmet des donn\xE9es via HTTP en clair depuis une page HTTPS (Mixed Content).`,
+                recommendation: `Modifiez l'attribut action du formulaire pour pointer vers une URL HTTPS (${form.action.replace("http:", "https:")}).`,
                 severity: "critical",
                 tags: ["dom", "mixed-content", "privacy"]
               });
@@ -1262,6 +1291,7 @@
           findings.push({
             title: "Mot de passe saisi sur HTTP (En clair)",
             description: "Un champ de mot de passe est pr\xE9sent sur une page non-s\xE9curis\xE9e (HTTP). Les identifiants peuvent \xEAtre intercept\xE9s.",
+            recommendation: "Migrez imm\xE9diatement la page de connexion sous HTTPS et forcez la redirection (HSTS).",
             severity: "critical",
             tags: ["dom", "password", "privacy"]
           });
@@ -1270,6 +1300,7 @@
           findings.push({
             title: "Fuite potentielle de donn\xE9es dans l'URL",
             description: "L'URL de la page contient des mots-cl\xE9s sensibles (token=, key=, password=). Ces donn\xE9es peuvent fuiter via l'en-t\xEAte Referer vers des sites tiers.",
+            recommendation: "Utilisez la m\xE9thode POST pour la transmission de jetons ou mots de passe, et \xE9vitez de les passer dans l'URL (GET).",
             severity: "high",
             tags: ["dom", "privacy", "referer"]
           });
@@ -1282,6 +1313,7 @@
           findings.push({
             title: "Pr\xE9sence de tokens/cl\xE9s dans les champs cach\xE9s",
             description: `Les champs cach\xE9s suivants semblent contenir des donn\xE9es sensibles ou des jetons : ${suspectHidden.map((i) => i.name).join(", ")}.`,
+            recommendation: "V\xE9rifiez que ces tokens (CSRF ou autres) sont correctement g\xE9n\xE9r\xE9s par session de mani\xE8re impr\xE9dictible et v\xE9rifi\xE9s c\xF4t\xE9 serveur.",
             severity: "low",
             tags: ["dom", "tokens"]
           });
@@ -1290,6 +1322,7 @@
           findings.push({
             title: "Pratique Black Hat SEO (Liens cach\xE9s d\xE9tect\xE9s)",
             description: `Le site contient ${domData.hiddenLinks.length} lien(s) rendu(s) invisible(s) \xE0 l'utilisateur (display:none, opacit\xE9 \xE0 0, hors de l'\xE9cran). C'est souvent utilis\xE9 pour manipuler le r\xE9f\xE9rencement (Dark links) ou inject\xE9 par des malwares.`,
+            recommendation: "V\xE9rifiez le code source de votre CMS pour supprimer ces liens s'ils ont \xE9t\xE9 inject\xE9s \xE0 votre insu. Privil\xE9giez des liens visibles et pertinents.",
             severity: "medium",
             tags: ["dom", "seo", "black-hat"]
           });
