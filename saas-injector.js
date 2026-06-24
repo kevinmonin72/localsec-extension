@@ -8,10 +8,13 @@ function injectReports() {
     chrome.storage.local.get(null, (items) => {
         urlItems.forEach(link => {
             try {
-                const url = new URL(link.href).origin;
-                const reportKey = 'report_' + url;
+                const hostname = new URL(link.href).hostname.replace(/^www\./, '');
                 
-                if (items[reportKey]) {
+                // Recherche flexible pour gérer les différences www. et https://
+                const reportKey = Object.keys(items).find(k => k.startsWith('report_') && k.includes(hostname));
+                const jsonKey = Object.keys(items).find(k => k.startsWith('json_') && k.includes(hostname));
+                
+                if (reportKey && items[reportKey]) {
                     // Conteneur pour les boutons
                     let btnContainer = link.parentElement.querySelector('.localsec-btns');
                     if (!btnContainer) {
@@ -41,8 +44,7 @@ function injectReports() {
                     }
 
                     // Bouton Email Prospection
-                    const jsonKey = 'json_' + url;
-                    if (items[jsonKey] && !btnContainer.querySelector('.view-email-btn')) {
+                    if (jsonKey && items[jsonKey] && !btnContainer.querySelector('.view-email-btn')) {
                         const emailBtn = document.createElement('button');
                         emailBtn.className = 'btn primary view-email-btn';
                         emailBtn.textContent = '📧 Email';
