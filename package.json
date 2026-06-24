@@ -1,0 +1,10 @@
+{
+  "name": "localsec-automation",
+  "version": "1.0.0",
+  "description": "Architecture de file d'attente RabbitMQ avec Puppeteer",
+  "main": "worker.js",
+  "dependencies": {
+    "amqplib": "^0.10.3",
+    "puppeteer": "^22.0.0"
+  }
+}
